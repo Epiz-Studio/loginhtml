@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Epiz Account — Sign in</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090b15;color:#f5f6ff;font:15px system-ui,sans-serif;padding:24px}
+    main{width:min(100%,460px);padding:30px;border:1px solid #ffffff1c;border-radius:20px;background:#111528;box-shadow:0 24px 80px #0008}
+    h1{margin:0 0 8px;font-size:25px}p{color:#aeb5cc;line-height:1.55}.status{padding:12px;border-radius:10px;background:#ffffff0c;color:#cbd2e8;margin-top:14px}#sign-in{margin-top:22px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Welcome to Epiz</h1>
+  <p>Sign in securely to connect your Epiz account to the launcher. Your Microsoft Minecraft account is separate.</p>
+  <div id="status" class="status">Loading secure sign-in…</div>
+  <div id="sign-in"></div>
+</main>
+<script type="module">
+  const statusEl = document.getElementById('status');
+  const signInEl = document.getElementById('sign-in');
+  const params = new URLSearchParams(location.search);
+  const publishableKey = params.get('publishable_key');
+  const redirectUrl = params.get('redirect_url');
+  const expectedRedirect = 'epizlauncher://auth/callback';
+  if (!publishableKey || !publishableKey.startsWith('pk_') || redirectUrl !== expectedRedirect) {
+    statusEl.textContent = 'Invalid launcher sign-in request. Please reopen sign-in from Epiz Launcher.';
+    throw new Error('Invalid sign-in parameters');
+  }
+  try {
+    const { Clerk } = await import('https://esm.sh/@clerk/clerk-js@latest');
+    const clerk = new Clerk(publishableKey);
+    await clerk.load();
+    if (clerk.session) {
+      statusEl.textContent = 'You are already signed in. Connecting to Epiz Launcher…';
+      const token = await clerk.session.getToken();
+      if (!token) throw new Error('Clerk did not provide a session token');
+      location.href = expectedRedirect + '#token=' + encodeURIComponent(token);
+    } else {
+      statusEl.textContent = 'Sign in or create an Epiz account.';
+      clerk.mountSignIn(signInEl, {
+        forceRedirectUrl: location.href,
+        signUpForceRedirectUrl: location.href,
+        fallbackRedirectUrl: location.href,
+        signUpFallbackRedirectUrl: location.href
+      });
+      clerk.addListener(async ({ session }) => {
+        if (!session) return;
+        try {
+          statusEl.textContent = 'Signed in. Returning to Epiz Launcher…';
+          clerk.unmountSignIn(signInEl);
+          const token = await session.getToken();
+          if (!token) throw new Error('Clerk did not provide a session token');
+          location.href = expectedRedirect + '#token=' + encodeURIComponent(token);
+        } catch (error) { statusEl.textContent = error.message || 'Could not complete sign-in.'; }
+      });
+    }
+  } catch (error) {
+    statusEl.textContent = 'Could not load Clerk sign-in. Please try again.';
+    console.error(error);
+  }
+</script>
+</body>
+</html>
