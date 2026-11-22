@@ -314,75 +314,104 @@
 
       returnButton.addEventListener("click", returnToLauncher);
 
+      function loadScript(src, attributes) {
+        return new Promise(function (resolve, reject) {
+          var script = document.createElement("script");
+          script.src = src;
+          script.async = false;
+          script.crossOrigin = "anonymous";
+          Object.keys(attributes || {}).forEach(function (key) {
+            script.setAttribute(key, attributes[key]);
+          });
+          script.onload = resolve;
+          script.onerror = function () {
+            reject(new Error("Failed to load Clerk script: " + src));
+          };
+          document.head.appendChild(script);
+        });
+      }
+
       async function startClerk() {
         try {
-          var script = document.createElement("script");
-          script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
-          script.async = true;
-          script.crossOrigin = "anonymous";
+          /*
+           * Clerk's current standalone setup serves both bundles from the
+           * Frontend API host encoded in the publishable key. Loading the
+           * old jsDelivr @5 bundle does not reliably create window.Clerk.
+           */
+          var encodedHost = publishableKey.split("_")[2];
+          if (!encodedHost) throw new Error("The Clerk publishable key is incomplete.");
 
-          script.onerror = function () {
-            loading.className = "status show error";
-            loading.textContent = "Could not load the secure sign-in service. Check your internet connection and reload this page.";
-          };
+          var clerkDomain;
+          try {
+            clerkDomain = atob(encodedHost).replace(/\$$/, "");
+          } catch (_) {
+            throw new Error("The Clerk publishable key is not valid base64.");
+          }
 
-          script.onload = async function () {
-            try {
-              if (!window.Clerk) throw new Error("The Clerk sign-in library did not initialise.");
-              clerk = window.Clerk;
-              await clerk.load({ publishableKey: publishableKey });
+          if (!/^[a-z0-9.-]+$/i.test(clerkDomain)) {
+            throw new Error("The publishable key contains an invalid Clerk frontend domain.");
+          }
 
-              var appearance = {
-                variables: {
-                  colorPrimary: getComputedStyle(root).getPropertyValue("--accent").trim() || "#1bd96a",
-                  colorText: getComputedStyle(root).getPropertyValue("--text").trim() || "#ecf0f4",
-                  colorTextSecondary: getComputedStyle(root).getPropertyValue("--muted").trim() || "#9aa3ad",
-                  colorBackground: getComputedStyle(root).getPropertyValue("--card").trim() || "#26292f",
-                  colorInputBackground: getComputedStyle(root).getPropertyValue("--field").trim() || "#1d2025",
-                  colorInputText: getComputedStyle(root).getPropertyValue("--text").trim() || "#ecf0f4",
-                  borderRadius: "0.7rem"
-                },
-                elements: {
-                  card: { boxShadow: "none", background: "transparent" },
-                  footer: { display: "none" },
-                  formButtonPrimary: { fontWeight: "700" }
-                }
-              };
+          var clerkBase = "https://" + clerkDomain + "/npm/";
+          await loadScript(clerkBase + "@clerk/ui@1/dist/ui.browser.js");
+          await loadScript(
+            clerkBase + "@clerk/clerk-js@6/dist/clerk.browser.js",
+            { "data-clerk-publishable-key": publishableKey }
+          );
 
-              clerk.mountSignIn(signInMount, { appearance: appearance });
-              clerk.mountSignUp(signUpMount, { appearance: appearance });
-              loading.classList.remove("show");
-              returnButton.disabled = !clerk.session;
+          if (!window.Clerk || typeof window.Clerk.load !== "function") {
+            throw new Error("Clerk's script loaded, but the Clerk global was not created. Check the publishable key and Frontend API domain.");
+          }
 
-              if (clerk.session) {
-                showStatus("You are already signed in. Continue to return to the launcher.", "success");
-                returnButton.disabled = false;
-              } else {
-                showStatus("Sign in or create an Epiz Account to continue.");
-              }
+          clerk = window.Clerk;
+          await clerk.load({
+            ui: { ClerkUI: window.__internal_ClerkUICtor }
+          });
 
-              if (typeof clerk.addListener === "function") {
-                clerk.addListener(function (resources) {
-                  if (resources && resources.session) {
-                    returnButton.disabled = false;
-                    showStatus("Your Epiz Account is signed in. Continue to return to the launcher.", "success");
-                  } else {
-                    returnButton.disabled = true;
-                  }
-                });
-              }
-            } catch (error) {
-              loading.className = "status show error";
-              loading.textContent = error && error.message
-                ? "Could not initialise Epiz sign-in: " + error.message
-                : "Could not initialise Epiz sign-in. Please reload the page.";
+          var appearance = {
+            variables: {
+              colorPrimary: getComputedStyle(root).getPropertyValue("--accent").trim() || "#1bd96a",
+              colorText: getComputedStyle(root).getPropertyValue("--text").trim() || "#ecf0f4",
+              colorTextSecondary: getComputedStyle(root).getPropertyValue("--muted").trim() || "#9aa3ad",
+              colorBackground: getComputedStyle(root).getPropertyValue("--card").trim() || "#26292f",
+              colorInputBackground: getComputedStyle(root).getPropertyValue("--field").trim() || "#1d2025",
+              colorInputText: getComputedStyle(root).getPropertyValue("--text").trim() || "#ecf0f4",
+              borderRadius: "0.7rem"
+            },
+            elements: {
+              card: { boxShadow: "none", background: "transparent" },
+              footer: { display: "none" },
+              formButtonPrimary: { fontWeight: "700" }
             }
           };
 
-          document.head.appendChild(script);
+          clerk.mountSignIn(signInMount, { appearance: appearance });
+          clerk.mountSignUp(signUpMount, { appearance: appearance });
+          loading.classList.remove("show");
+
+          if (clerk.session) {
+            showStatus("You are already signed in. Continue to return to the launcher.", "success");
+            returnButton.disabled = false;
+          } else {
+            returnButton.disabled = true;
+            showStatus("Sign in or create an Epiz Account to continue.");
+          }
+
+          if (typeof clerk.addListener === "function") {
+            clerk.addListener(function (resources) {
+              if (resources && resources.session) {
+                returnButton.disabled = false;
+                showStatus("Your Epiz Account is signed in. Continue to return to the launcher.", "success");
+              } else {
+                returnButton.disabled = true;
+              }
+            });
+          }
         } catch (error) {
           loading.className = "status show error";
-          loading.textContent = "Could not start Epiz sign-in. Please reload the page.";
+          loading.textContent = error && error.message
+            ? "Could not initialise Epiz sign-in: " + error.message
+            : "Could not initialise Epiz sign-in. Please reload the page.";
         }
       }
 
