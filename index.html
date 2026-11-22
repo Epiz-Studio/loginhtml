@@ -1,422 +1,886 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#16181c">
-  <meta name="description" content="Sign in to your Epiz Account and connect it to Epiz Launcher.">
-  <title>Epiz Account – Sign in</title>
-  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Epiz-Studio/favicon/main/website/epiz.png">
+
+  <title>Epiz Account</title>
+
+  <!--
+    IMPORTANT:
+    Capture the launcher parameters before loading Clerk.
+    Do not move this script below the Clerk scripts.
+  -->
   <script>
     (function () {
+      const STORAGE_KEY = "epiz_launcher_auth_request";
+
       try {
-        var saved = localStorage.getItem("epiz-theme");
-        if (saved === "light" || saved === "dark") {
-          document.documentElement.dataset.theme = saved;
-        } else {
-          document.documentElement.dataset.theme =
-            matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        const params = new URLSearchParams(window.location.search);
+
+        const pk = params.get("pk");
+        const callback = params.get("callback");
+
+        if (
+          pk &&
+          pk.startsWith("pk_") &&
+          callback === "epizlauncher://auth"
+        ) {
+          sessionStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              pk: pk,
+              callback: callback,
+              timestamp: Date.now()
+            })
+          );
         }
-      } catch (_) {}
+      } catch (error) {
+        console.error("Could not preserve launcher parameters:", error);
+      }
     })();
   </script>
+
   <style>
     :root {
       color-scheme: dark;
-      --bg: #16181c;
+
+      --background: #16181c;
       --card: #26292f;
-      --card2: #1d2025;
+      --secondary: #1d2025;
+      --border: #353941;
+
       --text: #ecf0f4;
       --muted: #9aa3ad;
+
       --accent: #1bd96a;
-      --accent-d: #12a54e;
-      --line: rgba(255,255,255,.08);
-      --danger: #ff7777;
-      --warning: #ffbd4a;
-      --shadow: 0 18px 55px rgba(0,0,0,.24);
-      --field: #1d2025;
+      --accent-dark: #12a54e;
+
+      --input: #1d2025;
+      --shadow: rgba(0, 0, 0, 0.25);
     }
-    :root[data-theme="light"] {
+
+    [data-theme="light"] {
       color-scheme: light;
-      --bg: #f1f3f6;
+
+      --background: #f1f3f6;
       --card: #ffffff;
-      --card2: #e9edf2;
-      --text: #1a1d21;
-      --muted: #59626d;
+      --secondary: #f4f6f8;
+      --border: #e1e5e9;
+
+      --text: #20252b;
+      --muted: #737d88;
+
       --accent: #0f9e4b;
-      --accent-d: #0b7a3a;
-      --line: rgba(0,0,0,.1);
-      --danger: #b42323;
-      --warning: #986000;
-      --shadow: 0 18px 55px rgba(0,0,0,.07);
-      --field: #f7f8fa;
+      --accent-dark: #087c39;
+
+      --input: #f5f6f8;
+      --shadow: rgba(0, 0, 0, 0.08);
     }
-    * { box-sizing: border-box; }
-    html { min-height: 100%; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      min-height: 100vh;
       margin: 0;
-      padding: 22px;
+      min-height: 100vh;
+
+      background: var(--background);
+      color: var(--text);
+
+      font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
       display: flex;
       flex-direction: column;
-      background:
-        radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 52%),
-        var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.6;
-      transition: background .2s, color .2s;
+      align-items: center;
     }
-    button, a { font: inherit; -webkit-tap-highlight-color: transparent; }
-    a { color: inherit; text-decoration: none; }
+
+    button {
+      font: inherit;
+    }
+
     .topbar {
       width: 100%;
-      max-width: 1060px;
-      margin: 0 auto;
+      max-width: 1100px;
+
+      padding: 22px 24px;
+
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
     }
-    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 850; font-size: 1.08rem; }
-    .brand img { width: 38px; height: 38px; object-fit: contain; border-radius: 10px; }
-    .brand b { color: var(--accent); }
-    .theme-toggle {
-      width: 40px; height: 40px; display: grid; place-items: center;
-      color: var(--text); background: var(--card); border: 1px solid var(--line);
-      border-radius: 12px; cursor: pointer;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -0.5px;
     }
-    .theme-toggle:hover { border-color: var(--accent); }
+
+    .brand img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      border-radius: 9px;
+    }
+
+    .theme-button {
+      width: 40px;
+      height: 40px;
+
+      border: 1px solid var(--border);
+      border-radius: 11px;
+
+      background: var(--card);
+      color: var(--text);
+
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .theme-button:hover {
+      border-color: var(--accent);
+    }
+
     main {
-      width: 100%; max-width: 460px; margin: auto;
-      padding: 48px 0;
+      width: 100%;
+      max-width: 480px;
+
+      padding: 35px 20px 60px;
+
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
+
     .card {
-      padding: 32px;
-      background: color-mix(in srgb, var(--card) 96%, transparent);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
+      background: var(--card);
+
+      border: 1px solid var(--border);
+      border-radius: 20px;
+
+      padding: 30px;
+
+      box-shadow: 0 15px 50px var(--shadow);
     }
-    .heading { text-align: center; margin-bottom: 25px; }
-    .logo {
-      width: 66px; height: 66px; object-fit: contain; border-radius: 17px;
-      margin-bottom: 15px; filter: drop-shadow(0 8px 18px rgba(0,0,0,.14));
+
+    .heading {
+      text-align: center;
+      margin-bottom: 25px;
     }
-    h1 { margin: 0 0 8px; font-size: clamp(1.7rem, 5vw, 2.1rem); line-height: 1.2; letter-spacing: -.04em; }
-    .heading p { margin: 0; color: var(--muted); font-size: .94rem; }
-    .account-label {
-      display: inline-flex; align-items: center; gap: 7px; margin-top: 15px;
-      padding: 5px 10px; border-radius: 99px;
-      background: color-mix(in srgb, var(--accent) 13%, transparent);
-      color: var(--accent); font-size: .75rem; font-weight: 800;
-      letter-spacing: .04em; text-transform: uppercase;
+
+    .heading h1 {
+      margin: 0 0 10px;
+
+      font-size: 27px;
+      font-weight: 750;
+      letter-spacing: -0.8px;
     }
-    .account-label::before {
-      content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 17%, transparent);
+
+    .heading p {
+      margin: 0;
+
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
     }
-    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 5px; margin-bottom: 20px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+
+      padding: 5px;
+      margin-bottom: 24px;
+
+      background: var(--secondary);
+      border-radius: 12px;
+    }
+
     .tab {
-      min-height: 40px; border: 0; border-radius: 8px; color: var(--muted);
-      background: transparent; font-weight: 750; cursor: pointer;
+      padding: 11px;
+
+      border: none;
+      border-radius: 9px;
+
+      background: transparent;
+      color: var(--muted);
+
+      font-weight: 650;
+      cursor: pointer;
+
+      transition: 0.2s;
     }
-    .tab[aria-selected="true"] { background: var(--card); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
-    .tab:hover { color: var(--accent); }
-    #clerk-sign-in, #clerk-sign-up { min-height: 180px; }
-    .hidden { display: none !important; }
+
+    .tab.active {
+      background: var(--card);
+      color: var(--text);
+
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .tab:hover {
+      color: var(--accent);
+    }
+
+    .auth-container {
+      min-height: 180px;
+    }
+
     .status {
-      display: none; margin-top: 16px; padding: 12px 14px;
-      border-radius: 11px; border: 1px solid var(--line);
-      background: var(--card2); color: var(--muted); font-size: .87rem;
+      display: none;
+
+      margin-top: 18px;
+      padding: 13px 15px;
+
+      border-radius: 10px;
+
+      font-size: 13px;
+      line-height: 1.5;
+
       overflow-wrap: anywhere;
     }
-    .status.show { display: block; }
-    .status.error { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
-    .status.success { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
-    .return-button {
-      width: 100%; min-height: 46px; margin-top: 14px; padding: 11px 16px;
-      border: 0; border-radius: 11px; background: var(--accent); color: #06210f;
-      font-weight: 800; cursor: pointer; transition: background .15s, transform .15s;
+
+    .status.info {
+      display: block;
+      background: rgba(70, 140, 255, 0.10);
+      border: 1px solid rgba(70, 140, 255, 0.25);
+      color: var(--text);
     }
-    .return-button:hover { background: var(--accent-d); color: #fff; transform: translateY(-1px); }
-    .return-button:disabled { opacity: .55; cursor: wait; transform: none; }
-    .separation {
-      display: flex; align-items: center; gap: 10px; margin: 23px 0 14px;
-      color: var(--muted); font-size: .78rem;
+
+    .status.error {
+      display: block;
+      background: rgba(255, 75, 75, 0.10);
+      border: 1px solid rgba(255, 75, 75, 0.25);
+      color: #ff7777;
     }
-    .separation::before, .separation::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+
+    .status.success {
+      display: block;
+      background: rgba(27, 217, 106, 0.10);
+      border: 1px solid rgba(27, 217, 106, 0.25);
+      color: var(--accent);
+    }
+
     .security {
-      display: flex; gap: 11px; margin-top: 20px; padding: 13px;
-      border: 1px solid var(--line); border-radius: 12px;
-      background: var(--card2); color: var(--muted); font-size: .81rem;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+
+      margin-top: 24px;
+      padding: 15px;
+
+      background: var(--secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
     }
-    .security strong { display: block; color: var(--text); margin-bottom: 2px; }
-    .security-icon { font-size: 1.15rem; }
-    footer { max-width: 1060px; width: 100%; margin: 0 auto; color: var(--muted); text-align: center; font-size: .8rem; }
-    footer a { color: var(--accent); }
-    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+    .security-icon {
+      font-size: 20px;
+    }
+
+    .security strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .security p {
+      margin: 0;
+
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .return-button {
+      display: none;
+
+      width: 100%;
+      margin-top: 15px;
+      padding: 13px;
+
+      border: none;
+      border-radius: 10px;
+
+      background: var(--accent);
+      color: #071b0e;
+
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    .return-button:hover {
+      background: var(--accent-dark);
+      color: white;
+    }
+
+    footer {
+      width: 100%;
+      padding: 20px;
+
+      text-align: center;
+
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .loading {
+      padding: 35px 10px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 25px;
+      height: 25px;
+
+      margin: 0 auto 15px;
+
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     @media (max-width: 520px) {
-      body { padding: 16px; }
-      main { padding: 30px 0; }
-      .card { padding: 23px 18px; border-radius: 18px; }
+      .topbar {
+        padding: 17px;
+      }
+
+      main {
+        padding: 20px 14px 40px;
+      }
+
+      .card {
+        padding: 23px 18px;
+        border-radius: 16px;
+      }
+
+      .heading h1 {
+        font-size: 24px;
+      }
     }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
-    }
-    /* Keep Clerk's hosted controls aligned with the Epiz theme. */
-    .cl-rootBox { width: 100%; }
-    .cl-card { box-shadow: none !important; }
   </style>
 </head>
+
 <body>
+
   <header class="topbar">
-    <a class="brand" href="https://epizmc.freedev.app/" aria-label="Epiz Studio home">
-      <img src="https://raw.githubusercontent.com/Epiz-Studio/favicon/main/website/epiz.png" alt="" width="38" height="38">
-      <span>Epiz <b>Studio</b></span>
-    </a>
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch colour theme" title="Switch colour theme">☀️</button>
+    <div class="brand">
+      <img
+        src="https://raw.githubusercontent.com/Epiz-Studio/favicon/main/website/epiz.png"
+        alt="Epiz Studio"
+      >
+      <span>Epiz Account</span>
+    </div>
+
+    <button
+      class="theme-button"
+      id="themeButton"
+      aria-label="Toggle theme"
+      title="Toggle theme"
+    >
+      ☀
+    </button>
   </header>
 
   <main>
-    <section class="card" aria-labelledby="page-title">
+    <section class="card">
+
       <div class="heading">
-        <img class="logo" src="https://raw.githubusercontent.com/Epiz-Studio/favicon/main/website/epiz.png" alt="Epiz Studio logo" width="66" height="66">
-        <h1 id="page-title">Your Epiz Account</h1>
-        <p>Sign in securely to connect your account to Epiz Launcher.</p>
-        <span class="account-label">Epiz Launcher connection</span>
+        <h1>Welcome to Epiz</h1>
+        <p>
+          Sign in securely to connect your Epiz account
+          to the launcher.
+        </p>
       </div>
 
-      <div class="tabs" role="tablist" aria-label="Account access">
-        <button class="tab" id="sign-in-tab" type="button" role="tab" aria-selected="true" aria-controls="clerk-sign-in">Sign in</button>
-        <button class="tab" id="sign-up-tab" type="button" role="tab" aria-selected="false" aria-controls="clerk-sign-up">Create account</button>
+      <div class="tabs">
+        <button class="tab active" id="signInTab">
+          Sign in
+        </button>
+
+        <button class="tab" id="signUpTab">
+          Create account
+        </button>
       </div>
 
-      <div id="loading" class="status show">Connecting securely to Epiz Accounts…</div>
-      <div id="clerk-sign-in"></div>
-      <div id="clerk-sign-up" class="hidden"></div>
-
-      <div class="separation">Launcher connection</div>
-      <button id="return-button" class="return-button" type="button" disabled>Continue to Epiz Launcher</button>
-      <div id="status" class="status" role="status" aria-live="polite"></div>
-
-      <div class="security">
-        <span class="security-icon" aria-hidden="true">🔒</span>
-        <div>
-          <strong>Your accounts stay separate</strong>
-          Your Epiz Account connects you to Epiz services. Your Microsoft Minecraft account is separate and is not changed by signing in here.
+      <div id="authContainer" class="auth-container">
+        <div class="loading">
+          <div class="spinner"></div>
+          Initialising secure sign-in...
         </div>
       </div>
+
+      <div id="status" class="status"></div>
+
+      <button id="returnButton" class="return-button">
+        Return to Epiz Launcher
+      </button>
+
+      <div class="security">
+        <div class="security-icon">🔒</div>
+
+        <div>
+          <strong>Your Minecraft account is separate</strong>
+
+          <p>
+            Your Epiz account is used to connect to Epiz services.
+            Your Microsoft Minecraft account and Minecraft
+            authentication are not changed.
+          </p>
+        </div>
+      </div>
+
     </section>
   </main>
 
   <footer>
-    © <span id="year">2026</span> Epiz Studio · <a href="https://epizmc.freedev.app/">Epiz Studio website</a>
+    Powered by <a href="https://epizmc.freedev.app">Epiz Studio</a>
   </footer>
 
   <script>
-    (function () {
-      "use strict";
+    const STORAGE_KEY = "epiz_launcher_auth_request";
 
-      var root = document.documentElement;
-      var themeButton = document.getElementById("theme-toggle");
-      var signInTab = document.getElementById("sign-in-tab");
-      var signUpTab = document.getElementById("sign-up-tab");
-      var signInMount = document.getElementById("clerk-sign-in");
-      var signUpMount = document.getElementById("clerk-sign-up");
-      var loading = document.getElementById("loading");
-      var statusBox = document.getElementById("status");
-      var returnButton = document.getElementById("return-button");
+    let clerk = null;
+    let currentMode = "signin";
+    let launcherCallback = null;
 
-      document.getElementById("year").textContent = new Date().getFullYear();
+    const authContainer =
+      document.getElementById("authContainer");
 
-      function updateThemeButton() {
-        var dark = (root.dataset.theme || "dark") === "dark";
-        themeButton.textContent = dark ? "☀️" : "🌙";
-        themeButton.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
-        themeButton.title = dark ? "Switch to light theme" : "Switch to dark theme";
+    const statusElement =
+      document.getElementById("status");
+
+    const returnButton =
+      document.getElementById("returnButton");
+
+    /*
+     * Recover launcher parameters.
+     *
+     * The first script in the HEAD saves them before Clerk loads.
+     * This function also supports recovery if Clerk changes the URL.
+     */
+
+    function getLauncherRequest() {
+      let saved = null;
+
+      try {
+        saved = JSON.parse(
+          sessionStorage.getItem(STORAGE_KEY) || "null"
+        );
+      } catch (error) {
+        console.error(error);
       }
-      updateThemeButton();
 
-      themeButton.addEventListener("click", function () {
-        var next = (root.dataset.theme || "dark") === "dark" ? "light" : "dark";
-        root.dataset.theme = next;
-        try { localStorage.setItem("epiz-theme", next); } catch (_) {}
-        updateThemeButton();
+      const params = new URLSearchParams(window.location.search);
+
+      const currentPk = params.get("pk");
+      const currentCallback = params.get("callback");
+
+      if (
+        currentPk &&
+        currentPk.startsWith("pk_") &&
+        currentCallback === "epizlauncher://auth"
+      ) {
+        saved = {
+          pk: currentPk,
+          callback: currentCallback
+        };
+
+        try {
+          sessionStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(saved)
+          );
+        } catch (_) {}
+      }
+
+      if (
+        !saved ||
+        !saved.pk ||
+        !saved.pk.startsWith("pk_") ||
+        saved.callback !== "epizlauncher://auth"
+      ) {
+        return null;
+      }
+
+      return saved;
+    }
+
+    function showStatus(message, type) {
+      statusElement.textContent = message;
+      statusElement.className = "status " + type;
+    }
+
+    function showError(message) {
+      authContainer.innerHTML = "";
+
+      showStatus(message, "error");
+    }
+
+    /*
+     * Theme handling
+     */
+
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+
+      try {
+        localStorage.setItem("epiz-theme", theme);
+      } catch (_) {}
+
+      document.getElementById("themeButton").textContent =
+        theme === "dark" ? "☀" : "☾";
+    }
+
+    let initialTheme = "dark";
+
+    try {
+      initialTheme =
+        localStorage.getItem("epiz-theme") || "dark";
+    } catch (_) {}
+
+    setTheme(initialTheme);
+
+    document.getElementById("themeButton")
+      .addEventListener("click", () => {
+        const current =
+          document.documentElement.dataset.theme;
+
+        setTheme(current === "dark" ? "light" : "dark");
       });
 
-      function showStatus(message, type) {
-        statusBox.textContent = message;
-        statusBox.className = "status show" + (type ? " " + type : "");
+    /*
+     * Clerk Frontend API hostname.
+     *
+     * The hostname is encoded inside the public publishable key.
+     */
+
+    function getClerkFrontendHost(publishableKey) {
+      const parts = publishableKey.split("_");
+
+      if (parts.length < 3) {
+        throw new Error("Invalid Clerk publishable key.");
       }
 
-      function selectTab(tab) {
-        var isSignIn = tab === "signin";
-        signInTab.setAttribute("aria-selected", String(isSignIn));
-        signUpTab.setAttribute("aria-selected", String(!isSignIn));
-        signInMount.classList.toggle("hidden", !isSignIn);
-        signUpMount.classList.toggle("hidden", isSignIn);
+      let encoded = parts[2];
+
+      encoded = encoded.replace(/\$/g, "");
+
+      encoded = encoded.replace(/-/g, "+");
+      encoded = encoded.replace(/_/g, "/");
+
+      while (encoded.length % 4) {
+        encoded += "=";
       }
-      signInTab.addEventListener("click", function () { selectTab("signin"); });
-      signUpTab.addEventListener("click", function () { selectTab("signup"); });
+
+      let hostname;
+
+      try {
+        hostname = atob(encoded);
+      } catch (_) {
+        throw new Error(
+          "Could not decode the Clerk Frontend API hostname."
+        );
+      }
+
+      hostname = hostname.replace(/\$$/, "");
+
+      if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) {
+        throw new Error(
+          "Invalid Clerk Frontend API hostname."
+        );
+      }
+
+      return hostname;
+    }
+
+    /*
+     * Load external Clerk scripts.
+     */
+
+    function loadScript(src, attributes = {}) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+
+        script.src = src;
+        script.async = true;
+
+        for (const [key, value] of Object.entries(attributes)) {
+          script.setAttribute(key, value);
+        }
+
+        script.onload = resolve;
+
+        script.onerror = () => {
+          reject(
+            new Error("Failed to load script: " + src)
+          );
+        };
+
+        document.head.appendChild(script);
+      });
+    }
+
+    async function initialiseClerk(publishableKey) {
+      const frontendHost =
+        getClerkFrontendHost(publishableKey);
+
+      const base =
+        "https://" + frontendHost + "/npm/";
 
       /*
-       * Read and validate the launch parameters before doing anything else.
-       * Do not call history.replaceState() here: the launcher callback must
-       * remain available throughout the Clerk sign-in / OAuth redirect flow.
+       * Load Clerk UI first.
        */
-      var params = new URLSearchParams(window.location.search);
-      var publishableKey = params.get("pk") || "";
-      var callback = params.get("callback") || "";
 
-      if (!publishableKey.startsWith("pk_")) {
-        loading.className = "status show error";
-        loading.textContent = "The launcher sign-in request is missing its Clerk publishable key. Close this page and reopen sign-in from Epiz Launcher.";
+      await loadScript(
+        base + "@clerk/ui@1/dist/ui.browser.js"
+      );
+
+      if (!window.__internal_ClerkUICtor) {
+        throw new Error(
+          "Clerk UI failed to initialise."
+        );
+      }
+
+      /*
+       * Load Clerk JS.
+       */
+
+      await loadScript(
+        base + "@clerk/clerk-js@6/dist/clerk.browser.js",
+        {
+          "data-clerk-publishable-key": publishableKey
+        }
+      );
+
+      if (!window.Clerk || !window.Clerk.load) {
+        throw new Error(
+          "The Clerk sign-in library did not initialise."
+        );
+      }
+
+      clerk = window.Clerk;
+
+      await clerk.load({
+        ui: {
+          ClerkUI: window.__internal_ClerkUICtor
+        }
+      });
+
+      if (!clerk) {
+        throw new Error(
+          "Clerk could not be initialised."
+        );
+      }
+    }
+
+    /*
+     * Mount Clerk sign-in and sign-up.
+     */
+
+    function mountAuth(mode) {
+      if (!clerk) {
         return;
       }
 
-      if (callback !== "epizlauncher://auth") {
-        loading.className = "status show error";
-        loading.textContent = "The launcher callback is missing or invalid. Close this page and reopen sign-in from Epiz Launcher.";
+      currentMode = mode;
+
+      document.getElementById("signInTab")
+        .classList.toggle("active", mode === "signin");
+
+      document.getElementById("signUpTab")
+        .classList.toggle("active", mode === "signup");
+
+      authContainer.innerHTML = "";
+
+      const mountPoint = document.createElement("div");
+
+      mountPoint.id = "clerkMount";
+
+      authContainer.appendChild(mountPoint);
+
+      try {
+        if (mode === "signin") {
+          clerk.mountSignIn(mountPoint, {
+            forceRedirectUrl: window.location.href,
+            fallbackRedirectUrl: window.location.href
+          });
+        } else {
+          clerk.mountSignUp(mountPoint, {
+            forceRedirectUrl: window.location.href,
+            fallbackRedirectUrl: window.location.href
+          });
+        }
+      } catch (error) {
+        console.error("Clerk mount error:", error);
+
+        showError(
+          "Could not display the sign-in form: " +
+          error.message
+        );
+      }
+    }
+
+    document.getElementById("signInTab")
+      .addEventListener("click", () => {
+        mountAuth("signin");
+      });
+
+    document.getElementById("signUpTab")
+      .addEventListener("click", () => {
+        mountAuth("signup");
+      });
+
+    /*
+     * Return to Epiz Launcher.
+     */
+
+    async function returnToLauncher() {
+      if (!clerk || !clerk.session) {
+        showStatus(
+          "You are not signed in yet.",
+          "error"
+        );
+
         return;
       }
 
-      var clerk;
-      var redirecting = false;
+      try {
+        showStatus(
+          "Preparing your secure launcher login...",
+          "info"
+        );
 
-      async function returnToLauncher() {
-        if (redirecting) return;
-        if (!clerk || !clerk.session) {
-          showStatus("Sign in to your Epiz Account first.", "error");
+        const token = await clerk.session.getToken({
+          template: "epiz_launcher"
+        });
+
+        if (!token) {
+          throw new Error(
+            "Could not obtain the Epiz Launcher session token. " +
+            "Check that the epiz_launcher JWT template exists."
+          );
+        }
+
+        if (!launcherCallback) {
+          throw new Error(
+            "The launcher callback is missing."
+          );
+        }
+
+        const target =
+          launcherCallback +
+          "?token=" +
+          encodeURIComponent(token);
+
+        showStatus(
+          "Signed in successfully. Returning to Epiz Launcher...",
+          "success"
+        );
+
+        try {
+          sessionStorage.removeItem(STORAGE_KEY);
+        } catch (_) {}
+
+        window.location.assign(target);
+
+      } catch (error) {
+        console.error(error);
+
+        showStatus(
+          error.message || "Could not return to the launcher.",
+          "error"
+        );
+      }
+    }
+
+    returnButton.addEventListener(
+      "click",
+      returnToLauncher
+    );
+
+    /*
+     * Authentication initialisation.
+     */
+
+    async function start() {
+      const request = getLauncherRequest();
+
+      if (!request) {
+        showError(
+          "Invalid launcher sign-in request. " +
+          "Please reopen sign-in from Epiz Launcher."
+        );
+
+        return;
+      }
+
+      launcherCallback = request.callback;
+
+      try {
+        await initialiseClerk(request.pk);
+
+        if (clerk.user) {
+          showStatus(
+            "You are already signed in to your Epiz account.",
+            "success"
+          );
+
+          returnButton.style.display = "block";
+
+          authContainer.innerHTML = "";
+
           return;
         }
 
-        redirecting = true;
-        returnButton.disabled = true;
-        returnButton.textContent = "Preparing secure connection…";
+        mountAuth("signin");
 
-        try {
-          var token = await clerk.session.getToken({ template: "epiz_launcher" });
-          if (!token) {
-            throw new Error("Clerk did not return a token. Check that your Clerk JWT template is named exactly epiz_launcher.");
-          }
+      } catch (error) {
+        console.error(
+          "Epiz authentication initialisation failed:",
+          error
+        );
 
-          var target = callback + "?token=" + encodeURIComponent(token);
-          showStatus("Signed in. Returning you to Epiz Launcher…", "success");
-          window.location.assign(target);
-        } catch (error) {
-          redirecting = false;
-          returnButton.disabled = false;
-          returnButton.textContent = "Continue to Epiz Launcher";
-          showStatus(error && error.message ? error.message : "Could not create the launcher sign-in token.", "error");
-        }
+        showError(
+          "Could not initialise Epiz sign-in: " +
+          (error.message || "Unknown error.")
+        );
       }
+    }
 
-      returnButton.addEventListener("click", returnToLauncher);
-
-      function loadScript(src, attributes) {
-        return new Promise(function (resolve, reject) {
-          var script = document.createElement("script");
-          script.src = src;
-          script.async = false;
-          script.crossOrigin = "anonymous";
-          Object.keys(attributes || {}).forEach(function (key) {
-            script.setAttribute(key, attributes[key]);
-          });
-          script.onload = resolve;
-          script.onerror = function () {
-            reject(new Error("Failed to load Clerk script: " + src));
-          };
-          document.head.appendChild(script);
-        });
-      }
-
-      async function startClerk() {
-        try {
-          /*
-           * Clerk's current standalone setup serves both bundles from the
-           * Frontend API host encoded in the publishable key. Loading the
-           * old jsDelivr @5 bundle does not reliably create window.Clerk.
-           */
-          var encodedHost = publishableKey.split("_")[2];
-          if (!encodedHost) throw new Error("The Clerk publishable key is incomplete.");
-
-          var clerkDomain;
-          try {
-            clerkDomain = atob(encodedHost).replace(/\$$/, "");
-          } catch (_) {
-            throw new Error("The Clerk publishable key is not valid base64.");
-          }
-
-          if (!/^[a-z0-9.-]+$/i.test(clerkDomain)) {
-            throw new Error("The publishable key contains an invalid Clerk frontend domain.");
-          }
-
-          var clerkBase = "https://" + clerkDomain + "/npm/";
-          await loadScript(clerkBase + "@clerk/ui@1/dist/ui.browser.js");
-          await loadScript(
-            clerkBase + "@clerk/clerk-js@6/dist/clerk.browser.js",
-            { "data-clerk-publishable-key": publishableKey }
-          );
-
-          if (!window.Clerk || typeof window.Clerk.load !== "function") {
-            throw new Error("Clerk's script loaded, but the Clerk global was not created. Check the publishable key and Frontend API domain.");
-          }
-
-          clerk = window.Clerk;
-          await clerk.load({
-            ui: { ClerkUI: window.__internal_ClerkUICtor }
-          });
-
-          var appearance = {
-            variables: {
-              colorPrimary: getComputedStyle(root).getPropertyValue("--accent").trim() || "#1bd96a",
-              colorText: getComputedStyle(root).getPropertyValue("--text").trim() || "#ecf0f4",
-              colorTextSecondary: getComputedStyle(root).getPropertyValue("--muted").trim() || "#9aa3ad",
-              colorBackground: getComputedStyle(root).getPropertyValue("--card").trim() || "#26292f",
-              colorInputBackground: getComputedStyle(root).getPropertyValue("--field").trim() || "#1d2025",
-              colorInputText: getComputedStyle(root).getPropertyValue("--text").trim() || "#ecf0f4",
-              borderRadius: "0.7rem"
-            },
-            elements: {
-              card: { boxShadow: "none", background: "transparent" },
-              footer: { display: "none" },
-              formButtonPrimary: { fontWeight: "700" }
-            }
-          };
-
-          clerk.mountSignIn(signInMount, { appearance: appearance });
-          clerk.mountSignUp(signUpMount, { appearance: appearance });
-          loading.classList.remove("show");
-
-          if (clerk.session) {
-            showStatus("You are already signed in. Continue to return to the launcher.", "success");
-            returnButton.disabled = false;
-          } else {
-            returnButton.disabled = true;
-            showStatus("Sign in or create an Epiz Account to continue.");
-          }
-
-          if (typeof clerk.addListener === "function") {
-            clerk.addListener(function (resources) {
-              if (resources && resources.session) {
-                returnButton.disabled = false;
-                showStatus("Your Epiz Account is signed in. Continue to return to the launcher.", "success");
-              } else {
-                returnButton.disabled = true;
-              }
-            });
-          }
-        } catch (error) {
-          loading.className = "status show error";
-          loading.textContent = error && error.message
-            ? "Could not initialise Epiz sign-in: " + error.message
-            : "Could not initialise Epiz sign-in. Please reload the page.";
-        }
-      }
-
-      startClerk();
-    })();
+    start();
   </script>
+
 </body>
 </html>
