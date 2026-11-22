@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign in · Epiz Launcher</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090b15;color:#eef0ff;font:15px system-ui,sans-serif;padding:24px}.card{width:min(440px,100%);padding:30px;border:1px solid #252943;border-radius:18px;background:#111528;box-shadow:0 20px 70px #0008}h1{margin:0 0 8px;font-size:25px}.muted{color:#aab0ca;line-height:1.6}#sign-in{margin-top:22px}.status{margin-top:16px;color:#9be8c1;font-size:13px}button{border:0;border-radius:9px;padding:12px 18px;background:#765cff;color:white;font-weight:700;cursor:pointer;width:100%;margin-top:16px}button:disabled{opacity:.5;cursor:wait}
+  </style>
+</head>
+<body><main class="card"><h1>Epiz Account</h1><p class="muted">Sign in securely to connect your Epiz account to the launcher. Your Microsoft Minecraft account is separate.</p><div id="sign-in"></div><button id="connect" hidden disabled>Return to Epiz Launcher</button><p class="status" id="status" role="status"></p></main>
+<script type="module">
+import { Clerk } from "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6/+esm";
+(async()=>{
+  const params=new URLSearchParams(location.search);
+  const pk=params.get('pk')||'';
+  const callback=params.get('callback')||'';
+  const status=document.getElementById('status');
+  const connect=document.getElementById('connect');
+  if(!pk.startsWith('pk_')||callback!=='epizlauncher://auth'){
+    status.textContent='Invalid launcher sign-in request. Please reopen sign-in from Epiz Launcher.';return;
+  }
+  try{
+    const clerkDomain=atob(pk.split('_')[2]).replace(/\$$/,'');
+    await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=`https://${clerkDomain}/npm/@clerk/ui@1/dist/ui.browser.js`;script.async=true;script.crossOrigin='anonymous';script.onload=resolve;script.onerror=()=>reject(new Error('Could not load Clerk sign-in components.'));document.head.appendChild(script);});
+    const clerk=new Clerk(pk);
+    await clerk.load({ui:{ClerkUI:window.__internal_ClerkUICtor}});
+    clerk.mountSignIn(document.getElementById('sign-in'),{afterSignInUrl:location.href,afterSignUpUrl:location.href});
+    const show=()=>{if(clerk.session){connect.hidden=false;connect.disabled=false;status.textContent='You are signed in. Return to the launcher to finish connecting.';}};
+    clerk.addListener(show);show();
+    connect.addEventListener('click',async()=>{
+      connect.disabled=true;status.textContent='Finishing secure sign-in…';
+      try{
+        const jwt=await clerk.session.getToken({template:'epiz_launcher'});
+        if(!jwt)throw new Error('Clerk did not return a session token.');
+        location.href='epizlauncher://auth#token='+encodeURIComponent(jwt);
+        status.textContent='Returning to Epiz Launcher…';
+      }catch(e){status.textContent=e.message||'Could not finish sign-in.';connect.disabled=false;}
+    });
+  }catch(e){status.textContent=e.message||'Could not load sign-in.';}
+})();
+</script></body></html>
