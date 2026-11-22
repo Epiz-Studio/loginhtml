@@ -1,886 +1,907 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#16181c">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16181c">
 
-  <title>Epiz Account</title>
+<title>Epiz Account</title>
 
-  <!--
-    IMPORTANT:
-    Capture the launcher parameters before loading Clerk.
-    Do not move this script below the Clerk scripts.
-  -->
-  <script>
-    (function () {
-      const STORAGE_KEY = "epiz_launcher_auth_request";
+<!-- Capture launcher parameters BEFORE anything else runs -->
+<script>
+(function () {
+    const STORAGE_KEY = "epiz_launcher_auth_request";
 
-      try {
+    try {
         const params = new URLSearchParams(window.location.search);
 
         const pk = params.get("pk");
         const callback = params.get("callback");
 
         if (
-          pk &&
-          pk.startsWith("pk_") &&
-          callback === "epizlauncher://auth"
+            pk &&
+            pk.startsWith("pk_") &&
+            callback === "epizlauncher://auth"
         ) {
-          sessionStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-              pk: pk,
-              callback: callback,
-              timestamp: Date.now()
-            })
-          );
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+                pk: pk,
+                callback: callback
+            }));
         }
-      } catch (error) {
-        console.error("Could not preserve launcher parameters:", error);
-      }
-    })();
-  </script>
-
-  <style>
-    :root {
-      color-scheme: dark;
-
-      --background: #16181c;
-      --card: #26292f;
-      --secondary: #1d2025;
-      --border: #353941;
-
-      --text: #ecf0f4;
-      --muted: #9aa3ad;
-
-      --accent: #1bd96a;
-      --accent-dark: #12a54e;
-
-      --input: #1d2025;
-      --shadow: rgba(0, 0, 0, 0.25);
+    } catch (error) {
+        console.error("Could not save launcher parameters:", error);
     }
+})();
+</script>
 
-    [data-theme="light"] {
-      color-scheme: light;
+<style>
+:root {
+    color-scheme: dark;
 
-      --background: #f1f3f6;
-      --card: #ffffff;
-      --secondary: #f4f6f8;
-      --border: #e1e5e9;
+    --background: #16181c;
+    --card: #26292f;
+    --secondary: #1d2025;
+    --border: #353941;
 
-      --text: #20252b;
-      --muted: #737d88;
+    --text: #ecf0f4;
+    --muted: #9aa3ad;
 
-      --accent: #0f9e4b;
-      --accent-dark: #087c39;
+    --accent: #1bd96a;
+    --accent-dark: #12a54e;
 
-      --input: #f5f6f8;
-      --shadow: rgba(0, 0, 0, 0.08);
+    --input: #1d2025;
+    --shadow: rgba(0,0,0,.25);
+}
+
+[data-theme="light"] {
+    color-scheme: light;
+
+    --background: #f1f3f6;
+    --card: #ffffff;
+    --secondary: #f4f6f8;
+    --border: #e1e5e9;
+
+    --text: #20252b;
+    --muted: #737d88;
+
+    --accent: #0f9e4b;
+    --accent-dark: #087c39;
+
+    --input: #f5f6f8;
+    --shadow: rgba(0,0,0,.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    background: var(--background);
+    color: var(--text);
+
+    font-family: Inter, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+button {
+    font: inherit;
+}
+
+.topbar {
+    width: 100%;
+    max-width: 1100px;
+
+    padding: 22px 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    font-size: 19px;
+    font-weight: 750;
+    letter-spacing: -.5px;
+}
+
+.brand img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 9px;
+}
+
+.theme-button {
+    width: 40px;
+    height: 40px;
+
+    border: 1px solid var(--border);
+    border-radius: 11px;
+
+    background: var(--card);
+    color: var(--text);
+
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.theme-button:hover {
+    border-color: var(--accent);
+}
+
+main {
+    width: 100%;
+    max-width: 480px;
+
+    padding: 35px 20px 60px;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.card {
+    background: var(--card);
+
+    border: 1px solid var(--border);
+    border-radius: 20px;
+
+    padding: 30px;
+
+    box-shadow: 0 15px 50px var(--shadow);
+}
+
+.heading {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.heading h1 {
+    margin: 0 0 10px;
+
+    font-size: 27px;
+    font-weight: 750;
+    letter-spacing: -.8px;
+}
+
+.heading p {
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+
+    padding: 5px;
+    margin-bottom: 24px;
+
+    background: var(--secondary);
+    border-radius: 12px;
+}
+
+.tab {
+    padding: 11px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: transparent;
+    color: var(--muted);
+
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.tab.active {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.tab:hover {
+    color: var(--accent);
+}
+
+.auth-container {
+    min-height: 180px;
+}
+
+.loading {
+    padding: 35px 10px;
+    text-align: center;
+
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.spinner {
+    width: 25px;
+    height: 25px;
+
+    margin: 0 auto 15px;
+
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+
+    animation: spin .8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
+}
 
-    * {
-      box-sizing: border-box;
-    }
+.status {
+    display: none;
 
-    body {
-      margin: 0;
-      min-height: 100vh;
+    margin-top: 18px;
+    padding: 13px 15px;
 
-      background: var(--background);
-      color: var(--text);
+    border-radius: 10px;
 
-      font-family:
-        Inter,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
 
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    overflow-wrap: anywhere;
+}
 
-    button {
-      font: inherit;
-    }
+.status.info {
+    display: block;
+    background: rgba(70,140,255,.10);
+    border: 1px solid rgba(70,140,255,.25);
+}
 
+.status.error {
+    display: block;
+    background: rgba(255,75,75,.10);
+    border: 1px solid rgba(255,75,75,.25);
+    color: #ff7777;
+}
+
+.status.success {
+    display: block;
+    background: rgba(27,217,106,.10);
+    border: 1px solid rgba(27,217,106,.25);
+    color: var(--accent);
+}
+
+.security {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+
+    margin-top: 24px;
+    padding: 15px;
+
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.security-icon {
+    font-size: 20px;
+}
+
+.security strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.security p {
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.return-button {
+    display: none;
+
+    width: 100%;
+    margin-top: 15px;
+    padding: 13px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: var(--accent);
+    color: #071b0e;
+
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.return-button:hover {
+    background: var(--accent-dark);
+    color: white;
+}
+
+footer {
+    width: 100%;
+    padding: 20px;
+
+    text-align: center;
+
+    color: var(--muted);
+    font-size: 12px;
+}
+
+footer a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 520px) {
     .topbar {
-      width: 100%;
-      max-width: 1100px;
-
-      padding: 22px 24px;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      font-size: 19px;
-      font-weight: 750;
-      letter-spacing: -0.5px;
-    }
-
-    .brand img {
-      width: 36px;
-      height: 36px;
-      object-fit: contain;
-      border-radius: 9px;
-    }
-
-    .theme-button {
-      width: 40px;
-      height: 40px;
-
-      border: 1px solid var(--border);
-      border-radius: 11px;
-
-      background: var(--card);
-      color: var(--text);
-
-      cursor: pointer;
-      font-size: 18px;
-    }
-
-    .theme-button:hover {
-      border-color: var(--accent);
+        padding: 17px;
     }
 
     main {
-      width: 100%;
-      max-width: 480px;
-
-      padding: 35px 20px 60px;
-
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+        padding: 20px 14px 40px;
     }
 
     .card {
-      background: var(--card);
-
-      border: 1px solid var(--border);
-      border-radius: 20px;
-
-      padding: 30px;
-
-      box-shadow: 0 15px 50px var(--shadow);
-    }
-
-    .heading {
-      text-align: center;
-      margin-bottom: 25px;
+        padding: 23px 18px;
+        border-radius: 16px;
     }
 
     .heading h1 {
-      margin: 0 0 10px;
-
-      font-size: 27px;
-      font-weight: 750;
-      letter-spacing: -0.8px;
-    }
-
-    .heading p {
-      margin: 0;
-
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5px;
-
-      padding: 5px;
-      margin-bottom: 24px;
-
-      background: var(--secondary);
-      border-radius: 12px;
-    }
-
-    .tab {
-      padding: 11px;
-
-      border: none;
-      border-radius: 9px;
-
-      background: transparent;
-      color: var(--muted);
-
-      font-weight: 650;
-      cursor: pointer;
-
-      transition: 0.2s;
-    }
-
-    .tab.active {
-      background: var(--card);
-      color: var(--text);
-
-      box-shadow: 0 2px 8px var(--shadow);
-    }
-
-    .tab:hover {
-      color: var(--accent);
-    }
-
-    .auth-container {
-      min-height: 180px;
-    }
-
-    .status {
-      display: none;
-
-      margin-top: 18px;
-      padding: 13px 15px;
-
-      border-radius: 10px;
-
-      font-size: 13px;
-      line-height: 1.5;
-
-      overflow-wrap: anywhere;
-    }
-
-    .status.info {
-      display: block;
-      background: rgba(70, 140, 255, 0.10);
-      border: 1px solid rgba(70, 140, 255, 0.25);
-      color: var(--text);
-    }
-
-    .status.error {
-      display: block;
-      background: rgba(255, 75, 75, 0.10);
-      border: 1px solid rgba(255, 75, 75, 0.25);
-      color: #ff7777;
-    }
-
-    .status.success {
-      display: block;
-      background: rgba(27, 217, 106, 0.10);
-      border: 1px solid rgba(27, 217, 106, 0.25);
-      color: var(--accent);
-    }
-
-    .security {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-
-      margin-top: 24px;
-      padding: 15px;
-
-      background: var(--secondary);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-
-    .security-icon {
-      font-size: 20px;
-    }
-
-    .security strong {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 13px;
-    }
-
-    .security p {
-      margin: 0;
-
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    .return-button {
-      display: none;
-
-      width: 100%;
-      margin-top: 15px;
-      padding: 13px;
-
-      border: none;
-      border-radius: 10px;
-
-      background: var(--accent);
-      color: #071b0e;
-
-      font-weight: 750;
-      cursor: pointer;
-    }
-
-    .return-button:hover {
-      background: var(--accent-dark);
-      color: white;
-    }
-
-    footer {
-      width: 100%;
-      padding: 20px;
-
-      text-align: center;
-
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
-
-    .loading {
-      padding: 35px 10px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .spinner {
-      width: 25px;
-      height: 25px;
-
-      margin: 0 auto 15px;
-
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @media (max-width: 520px) {
-      .topbar {
-        padding: 17px;
-      }
-
-      main {
-        padding: 20px 14px 40px;
-      }
-
-      .card {
-        padding: 23px 18px;
-        border-radius: 16px;
-      }
-
-      .heading h1 {
         font-size: 24px;
-      }
     }
-  </style>
+}
+</style>
 </head>
 
 <body>
 
-  <header class="topbar">
+<header class="topbar">
+
     <div class="brand">
-      <img
-        src="https://raw.githubusercontent.com/Epiz-Studio/favicon/main/website/epiz.png"
-        alt="Epiz Studio"
-      >
-      <span>Epiz Account</span>
+        <img
+            src="https://raw.githubusercontent.com/Epiz-Studio/favicon/main/website/epiz.png"
+            alt="Epiz Studio"
+        >
+        <span>Epiz Account</span>
     </div>
 
     <button
-      class="theme-button"
-      id="themeButton"
-      aria-label="Toggle theme"
-      title="Toggle theme"
-    >
-      ☀
-    </button>
-  </header>
+        class="theme-button"
+        id="themeButton"
+        aria-label="Toggle theme"
+    >☀</button>
 
-  <main>
-    <section class="card">
+</header>
 
-      <div class="heading">
+<main>
+
+<section class="card">
+
+    <div class="heading">
         <h1>Welcome to Epiz</h1>
         <p>
-          Sign in securely to connect your Epiz account
-          to the launcher.
+            Sign in securely to connect your Epiz account
+            to the launcher.
         </p>
-      </div>
+    </div>
 
-      <div class="tabs">
+    <div class="tabs">
+
         <button class="tab active" id="signInTab">
-          Sign in
+            Sign in
         </button>
 
         <button class="tab" id="signUpTab">
-          Create account
+            Create account
         </button>
-      </div>
 
-      <div id="authContainer" class="auth-container">
+    </div>
+
+    <div id="authContainer" class="auth-container">
         <div class="loading">
-          <div class="spinner"></div>
-          Initialising secure sign-in...
+            <div class="spinner"></div>
+            Initialising secure sign-in...
         </div>
-      </div>
+    </div>
 
-      <div id="status" class="status"></div>
+    <div id="status" class="status"></div>
 
-      <button id="returnButton" class="return-button">
+    <button id="returnButton" class="return-button">
         Return to Epiz Launcher
-      </button>
+    </button>
 
-      <div class="security">
+    <div class="security">
+
         <div class="security-icon">🔒</div>
 
         <div>
-          <strong>Your Minecraft account is separate</strong>
+            <strong>Your Minecraft account is separate</strong>
 
-          <p>
-            Your Epiz account is used to connect to Epiz services.
-            Your Microsoft Minecraft account and Minecraft
-            authentication are not changed.
-          </p>
+            <p>
+                Your Epiz account connects you to Epiz services.
+                Your Microsoft Minecraft account and Minecraft
+                authentication are not changed.
+            </p>
         </div>
-      </div>
 
-    </section>
-  </main>
+    </div>
 
-  <footer>
-    Powered by <a href="https://epizmc.freedev.app">Epiz Studio</a>
-  </footer>
+</section>
 
-  <script>
-    const STORAGE_KEY = "epiz_launcher_auth_request";
+</main>
 
-    let clerk = null;
-    let currentMode = "signin";
-    let launcherCallback = null;
+<footer>
+    Powered by
+    <a href="https://epizmc.freedev.app">Epiz Studio</a>
+</footer>
 
-    const authContainer =
-      document.getElementById("authContainer");
+<script>
+const STORAGE_KEY = "epiz_launcher_auth_request";
 
-    const statusElement =
-      document.getElementById("status");
+let clerk = null;
+let launcherCallback = null;
 
-    const returnButton =
-      document.getElementById("returnButton");
+/* ------------------------------
+   THEME
+------------------------------ */
+
+function setTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+
+    try {
+        localStorage.setItem("epiz-theme", theme);
+    } catch (_) {}
+
+    document.getElementById("themeButton").textContent =
+        theme === "dark" ? "☀" : "☾";
+}
+
+let initialTheme = "dark";
+
+try {
+    initialTheme = localStorage.getItem("epiz-theme") || "dark";
+} catch (_) {}
+
+setTheme(initialTheme);
+
+document.getElementById("themeButton").addEventListener(
+    "click",
+    () => {
+        const current =
+            document.documentElement.dataset.theme;
+
+        setTheme(current === "dark" ? "light" : "dark");
+    }
+);
+
+/* ------------------------------
+   STATUS
+------------------------------ */
+
+const authContainer =
+    document.getElementById("authContainer");
+
+const statusElement =
+    document.getElementById("status");
+
+const returnButton =
+    document.getElementById("returnButton");
+
+function showStatus(message, type) {
+    statusElement.textContent = message;
+    statusElement.className = "status " + type;
+}
+
+function showError(message) {
+    authContainer.innerHTML = "";
+    showStatus(message, "error");
+}
+
+/* ------------------------------
+   RECOVER LAUNCHER PARAMETERS
+------------------------------ */
+
+function getLauncherRequest() {
+    let saved = null;
+
+    try {
+        saved = JSON.parse(
+            sessionStorage.getItem(STORAGE_KEY) || "null"
+        );
+    } catch (error) {
+        console.error("Session storage error:", error);
+    }
 
     /*
-     * Recover launcher parameters.
-     *
-     * The first script in the HEAD saves them before Clerk loads.
-     * This function also supports recovery if Clerk changes the URL.
-     */
+       Check the current URL too.
 
-    function getLauncherRequest() {
-      let saved = null;
+       If the parameters are still there, refresh
+       the saved copy.
+    */
 
-      try {
-        saved = JSON.parse(
-          sessionStorage.getItem(STORAGE_KEY) || "null"
-        );
-      } catch (error) {
-        console.error(error);
-      }
+    const params = new URLSearchParams(
+        window.location.search
+    );
 
-      const params = new URLSearchParams(window.location.search);
+    const currentPk = params.get("pk");
+    const currentCallback = params.get("callback");
 
-      const currentPk = params.get("pk");
-      const currentCallback = params.get("callback");
-
-      if (
+    if (
         currentPk &&
         currentPk.startsWith("pk_") &&
         currentCallback === "epizlauncher://auth"
-      ) {
+    ) {
         saved = {
-          pk: currentPk,
-          callback: currentCallback
+            pk: currentPk,
+            callback: currentCallback
         };
 
         try {
-          sessionStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(saved)
-          );
+            sessionStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(saved)
+            );
         } catch (_) {}
-      }
+    }
 
-      if (
+    if (
         !saved ||
         !saved.pk ||
         !saved.pk.startsWith("pk_") ||
         saved.callback !== "epizlauncher://auth"
-      ) {
+    ) {
         return null;
-      }
-
-      return saved;
     }
 
-    function showStatus(message, type) {
-      statusElement.textContent = message;
-      statusElement.className = "status " + type;
+    return saved;
+}
+
+/* ------------------------------
+   CLERK FRONTEND HOST
+------------------------------ */
+
+function getClerkFrontendHost(publishableKey) {
+    const parts = publishableKey.split("_");
+
+    if (parts.length < 3) {
+        throw new Error("Invalid Clerk publishable key.");
     }
 
-    function showError(message) {
-      authContainer.innerHTML = "";
+    let encoded = parts[2];
 
-      showStatus(message, "error");
+    encoded = encoded.replace(/\$/g, "");
+    encoded = encoded.replace(/-/g, "+");
+    encoded = encoded.replace(/_/g, "/");
+
+    while (encoded.length % 4) {
+        encoded += "=";
     }
 
-    /*
-     * Theme handling
-     */
-
-    function setTheme(theme) {
-      document.documentElement.dataset.theme = theme;
-
-      try {
-        localStorage.setItem("epiz-theme", theme);
-      } catch (_) {}
-
-      document.getElementById("themeButton").textContent =
-        theme === "dark" ? "☀" : "☾";
-    }
-
-    let initialTheme = "dark";
+    let hostname;
 
     try {
-      initialTheme =
-        localStorage.getItem("epiz-theme") || "dark";
-    } catch (_) {}
-
-    setTheme(initialTheme);
-
-    document.getElementById("themeButton")
-      .addEventListener("click", () => {
-        const current =
-          document.documentElement.dataset.theme;
-
-        setTheme(current === "dark" ? "light" : "dark");
-      });
-
-    /*
-     * Clerk Frontend API hostname.
-     *
-     * The hostname is encoded inside the public publishable key.
-     */
-
-    function getClerkFrontendHost(publishableKey) {
-      const parts = publishableKey.split("_");
-
-      if (parts.length < 3) {
-        throw new Error("Invalid Clerk publishable key.");
-      }
-
-      let encoded = parts[2];
-
-      encoded = encoded.replace(/\$/g, "");
-
-      encoded = encoded.replace(/-/g, "+");
-      encoded = encoded.replace(/_/g, "/");
-
-      while (encoded.length % 4) {
-        encoded += "=";
-      }
-
-      let hostname;
-
-      try {
         hostname = atob(encoded);
-      } catch (_) {
+    } catch (_) {
         throw new Error(
-          "Could not decode the Clerk Frontend API hostname."
+            "Could not decode Clerk Frontend API hostname."
         );
-      }
-
-      hostname = hostname.replace(/\$$/, "");
-
-      if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) {
-        throw new Error(
-          "Invalid Clerk Frontend API hostname."
-        );
-      }
-
-      return hostname;
     }
 
-    /*
-     * Load external Clerk scripts.
-     */
+    hostname = hostname.replace(/\$$/, "");
 
-    function loadScript(src, attributes = {}) {
-      return new Promise((resolve, reject) => {
+    if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) {
+        throw new Error(
+            "Invalid Clerk Frontend API hostname."
+        );
+    }
+
+    return hostname;
+}
+
+/* ------------------------------
+   LOAD SCRIPT
+------------------------------ */
+
+function loadScript(src, attributes = {}) {
+    return new Promise((resolve, reject) => {
         const script = document.createElement("script");
 
         script.src = src;
         script.async = true;
 
         for (const [key, value] of Object.entries(attributes)) {
-          script.setAttribute(key, value);
+            script.setAttribute(key, value);
         }
 
         script.onload = resolve;
 
         script.onerror = () => {
-          reject(
-            new Error("Failed to load script: " + src)
-          );
+            reject(new Error("Failed to load: " + src));
         };
 
         document.head.appendChild(script);
-      });
-    }
+    });
+}
 
-    async function initialiseClerk(publishableKey) {
-      const frontendHost =
+/* ------------------------------
+   INITIALISE CLERK
+------------------------------ */
+
+async function initialiseClerk(publishableKey) {
+    const frontendHost =
         getClerkFrontendHost(publishableKey);
 
-      const base =
+    const base =
         "https://" + frontendHost + "/npm/";
 
-      /*
-       * Load Clerk UI first.
-       */
+    /*
+       Load Clerk UI.
+    */
 
-      await loadScript(
+    await loadScript(
         base + "@clerk/ui@1/dist/ui.browser.js"
-      );
+    );
 
-      if (!window.__internal_ClerkUICtor) {
-        throw new Error(
-          "Clerk UI failed to initialise."
-        );
-      }
-
-      /*
-       * Load Clerk JS.
-       */
-
-      await loadScript(
-        base + "@clerk/clerk-js@6/dist/clerk.browser.js",
-        {
-          "data-clerk-publishable-key": publishableKey
-        }
-      );
-
-      if (!window.Clerk || !window.Clerk.load) {
-        throw new Error(
-          "The Clerk sign-in library did not initialise."
-        );
-      }
-
-      clerk = window.Clerk;
-
-      await clerk.load({
-        ui: {
-          ClerkUI: window.__internal_ClerkUICtor
-        }
-      });
-
-      if (!clerk) {
-        throw new Error(
-          "Clerk could not be initialised."
-        );
-      }
+    if (!window.__internal_ClerkUICtor) {
+        throw new Error("Clerk UI failed to initialise.");
     }
 
     /*
-     * Mount Clerk sign-in and sign-up.
-     */
+       Load Clerk JS.
+    */
 
-    function mountAuth(mode) {
-      if (!clerk) {
-        return;
-      }
+    await loadScript(
+        base + "@clerk/clerk-js@6/dist/clerk.browser.js",
+        {
+            "data-clerk-publishable-key": publishableKey
+        }
+    );
 
-      currentMode = mode;
+    if (!window.Clerk || !window.Clerk.load) {
+        throw new Error(
+            "The Clerk sign-in library did not initialise."
+        );
+    }
 
-      document.getElementById("signInTab")
+    clerk = window.Clerk;
+
+    await clerk.load({
+        ui: {
+            ClerkUI: window.__internal_ClerkUICtor
+        }
+    });
+}
+
+/* ------------------------------
+   CLEAN CLERK REDIRECT URL
+
+   IMPORTANT:
+   This URL deliberately does NOT contain
+   the original launcher callback or publishable key.
+
+   The callback is preserved separately in sessionStorage.
+------------------------------ */
+
+function getCleanRedirectUrl() {
+    return window.location.origin +
+        window.location.pathname;
+}
+
+/* ------------------------------
+   MOUNT AUTHENTICATION
+------------------------------ */
+
+function mountAuth(mode) {
+    if (!clerk) return;
+
+    document.getElementById("signInTab")
         .classList.toggle("active", mode === "signin");
 
-      document.getElementById("signUpTab")
+    document.getElementById("signUpTab")
         .classList.toggle("active", mode === "signup");
 
-      authContainer.innerHTML = "";
+    authContainer.innerHTML = "";
 
-      const mountPoint = document.createElement("div");
+    const mountPoint = document.createElement("div");
 
-      mountPoint.id = "clerkMount";
+    mountPoint.id = "clerkMount";
 
-      authContainer.appendChild(mountPoint);
+    authContainer.appendChild(mountPoint);
 
-      try {
+    const redirectUrl = getCleanRedirectUrl();
+
+    try {
         if (mode === "signin") {
-          clerk.mountSignIn(mountPoint, {
-            forceRedirectUrl: window.location.href,
-            fallbackRedirectUrl: window.location.href
-          });
+            clerk.mountSignIn(mountPoint, {
+                forceRedirectUrl: redirectUrl,
+                fallbackRedirectUrl: redirectUrl
+            });
         } else {
-          clerk.mountSignUp(mountPoint, {
-            forceRedirectUrl: window.location.href,
-            fallbackRedirectUrl: window.location.href
-          });
+            clerk.mountSignUp(mountPoint, {
+                forceRedirectUrl: redirectUrl,
+                fallbackRedirectUrl: redirectUrl
+            });
         }
-      } catch (error) {
+    } catch (error) {
         console.error("Clerk mount error:", error);
 
         showError(
-          "Could not display the sign-in form: " +
-          error.message
+            "Could not display sign-in: " + error.message
         );
-      }
     }
+}
 
-    document.getElementById("signInTab")
-      .addEventListener("click", () => {
+/* ------------------------------
+   TAB SWITCHING
+
+   No page reloads.
+------------------------------ */
+
+document.getElementById("signInTab")
+    .addEventListener("click", () => {
         mountAuth("signin");
-      });
+    });
 
-    document.getElementById("signUpTab")
-      .addEventListener("click", () => {
+document.getElementById("signUpTab")
+    .addEventListener("click", () => {
         mountAuth("signup");
-      });
+    });
 
-    /*
-     * Return to Epiz Launcher.
-     */
+/* ------------------------------
+   RETURN TO LAUNCHER
+------------------------------ */
 
-    async function returnToLauncher() {
-      if (!clerk || !clerk.session) {
+async function returnToLauncher() {
+    if (!clerk || !clerk.session) {
         showStatus(
-          "You are not signed in yet.",
-          "error"
+            "You are not signed in yet.",
+            "error"
         );
 
         return;
-      }
+    }
 
-      try {
+    try {
         showStatus(
-          "Preparing your secure launcher login...",
-          "info"
+            "Preparing your secure launcher login...",
+            "info"
         );
 
         const token = await clerk.session.getToken({
-          template: "epiz_launcher"
+            template: "epiz_launcher"
         });
 
         if (!token) {
-          throw new Error(
-            "Could not obtain the Epiz Launcher session token. " +
-            "Check that the epiz_launcher JWT template exists."
-          );
+            throw new Error(
+                "Could not obtain an Epiz Launcher token. " +
+                "Check your epiz_launcher JWT template."
+            );
         }
 
         if (!launcherCallback) {
-          throw new Error(
-            "The launcher callback is missing."
-          );
+            throw new Error(
+                "The launcher callback is missing."
+            );
         }
 
         const target =
-          launcherCallback +
-          "?token=" +
-          encodeURIComponent(token);
+            launcherCallback +
+            "?token=" +
+            encodeURIComponent(token);
 
         showStatus(
-          "Signed in successfully. Returning to Epiz Launcher...",
-          "success"
+            "Signed in! Returning to Epiz Launcher...",
+            "success"
         );
 
+        /*
+           Only clear the saved request once
+           the token has been successfully generated.
+        */
+
         try {
-          sessionStorage.removeItem(STORAGE_KEY);
+            sessionStorage.removeItem(STORAGE_KEY);
         } catch (_) {}
 
         window.location.assign(target);
 
-      } catch (error) {
+    } catch (error) {
         console.error(error);
 
         showStatus(
-          error.message || "Could not return to the launcher.",
-          "error"
+            error.message || "Could not return to launcher.",
+            "error"
         );
-      }
     }
+}
 
-    returnButton.addEventListener(
-      "click",
-      returnToLauncher
-    );
+returnButton.addEventListener(
+    "click",
+    returnToLauncher
+);
 
-    /*
-     * Authentication initialisation.
-     */
+/* ------------------------------
+   START
+------------------------------ */
 
-    async function start() {
-      const request = getLauncherRequest();
+async function start() {
+    const request = getLauncherRequest();
 
-      if (!request) {
+    if (!request) {
         showError(
-          "Invalid launcher sign-in request. " +
-          "Please reopen sign-in from Epiz Launcher."
+            "Invalid launcher sign-in request. " +
+            "Please reopen sign-in from Epiz Launcher."
         );
 
         return;
-      }
+    }
 
-      launcherCallback = request.callback;
+    launcherCallback = request.callback;
 
-      try {
+    try {
         await initialiseClerk(request.pk);
 
+        /*
+           If the user is already signed in,
+           show the launcher return button.
+        */
+
         if (clerk.user) {
-          showStatus(
-            "You are already signed in to your Epiz account.",
-            "success"
-          );
+            authContainer.innerHTML = "";
 
-          returnButton.style.display = "block";
+            showStatus(
+                "You are already signed in to your Epiz account.",
+                "success"
+            );
 
-          authContainer.innerHTML = "";
+            returnButton.style.display = "block";
 
-          return;
+            return;
         }
 
         mountAuth("signin");
 
-      } catch (error) {
+    } catch (error) {
         console.error(
-          "Epiz authentication initialisation failed:",
-          error
+            "Epiz authentication initialisation failed:",
+            error
         );
 
         showError(
-          "Could not initialise Epiz sign-in: " +
-          (error.message || "Unknown error.")
+            "Could not initialise Epiz sign-in: " +
+            (error.message || "Unknown error.")
         );
-      }
     }
+}
 
-    start();
-  </script>
+start();
+
+</script>
 
 </body>
 </html>
